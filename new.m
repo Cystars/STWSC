@@ -1,0 +1,51 @@
+function [acc, nmi, ARI, Fscore, Pu, Precision, Recall] = new(X, bnorm, gt, maxIter, lamda,k)
+
+W_ssc = SSC(X, 0, false, 10, false, 2);  
+[W_lrr, ~] = LRR(X, 1e-8);                 
+W_lsr = LSR(X, 1e+6);                     
+W_list = {W_ssc, W_lrr, W_lsr}; 
+%    	    SSC	    LRR	    LSR
+% dig	    100	    1E-7	1E+6
+% S1500	    10	    1E-2	1E+2
+% jaffe	    100	    1E-6	1E+7
+% D50	    10	    1E-5	1E+3
+% iris	    1000	1E-2	1E+2
+% yeast     10	    1E-5	1E+2
+% Isolet5	10	    1E-2	1E+7
+% COIL20	10	    1E-3	1E+5
+% COIL100	1E+6	1E-2	1E+4
+% yaleB	    1E+8	1E-3	1E+1
+% USPS	    10	    1E-8	1E+6
+% BA	    1E+6	1E-7	1E+5
+% imagenet  8       0.05    1
+
+p = 0.05; 
+[Omega_m, Omega_c] = generate_pair_constraints(gt, p); 
+
+
+params = struct();
+params.lambda = lamda(1);    
+params.beta =1e+4;       
+params.theta = lamda(2);     
+params.gamma = 0.1;     
+params.eta = 0.01;       
+params.tau = 0.8;        
+params.epsilon = 0.2;    
+params.k = k; 
+params.max_iter = maxIter;  
+params.tol = 1e-5;       
+
+
+[labels, alpha]= AWSSC_Tensor_v3(W_list, Omega_m, Omega_c, params);
+[result,~] = Clustering8Measure(gt, labels);
+
+acc=result(1);
+nmi=result(2);
+ARI=result(3);
+Fscore=result(4);
+Pu=result(5);
+Precision=result(6);
+Recall=result(7);
+
+
+end
